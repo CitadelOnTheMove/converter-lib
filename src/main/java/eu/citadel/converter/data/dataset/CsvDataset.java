@@ -1,15 +1,20 @@
 package eu.citadel.converter.data.dataset;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
+import java.io.FileWriter;
 import java.io.IOException;
 import java.net.URL;
 import java.nio.charset.Charset;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.supercsv.cellprocessor.ift.CellProcessor;
+import org.supercsv.io.CsvListWriter;
 import org.supercsv.io.ICsvListReader;
+import org.supercsv.io.ICsvListWriter;
+import org.supercsv.prefs.CsvPreference;
 
 import com.google.common.collect.Lists;
 
@@ -148,10 +153,10 @@ public class CsvDataset extends Dataset {
 			logger.trace("getFirstRow() - end");
 			return returnList;
 		}
-		else if (status.contains(DatasetStatus.STATUS_PATH)) {
-			logger.trace("getFirstRow() - {}", DatasetStatus.STATUS_PATH);
+		else if (status.contains(DatasetStatus.STATUS_PATH) || status.contains(DatasetStatus.STATUS_TEMPPATH)) {
+			logger.trace("getFirstRow() - {}", DatasetStatus.STATUS_PATH + " or " + DatasetStatus.STATUS_TEMPPATH);
 			List<List<String>> content = new CsvDatasetContentBuilder()
-				.setPath(path)
+				.setPath(status.contains(DatasetStatus.STATUS_PATH) ? path : tempPath)
 				.setCsvType(csvType)
 				.setLines(1)
 				.setCharset(null)
@@ -173,6 +178,7 @@ public class CsvDataset extends Dataset {
 	 * Return the content of CSV, based on the status in order of importance:
 	 * CONTENT: the content already present.
 	 * PATH: as obtained after the last call to build()
+	 * TEMPPATH: as obtained after the last call to build()
 	 * @return the content of CSV
 	 * @throws IOException
 	 */
@@ -188,6 +194,11 @@ public class CsvDataset extends Dataset {
 			logger.trace("getContent() - end");
 			return content;
 		}
+		else if (status.contains(DatasetStatus.STATUS_TEMPPATH)) {
+			logger.trace("getContent() - {}", DatasetStatus.STATUS_TEMPPATH);
+			logger.trace("getContent() - end");
+			return content;
+		}
 		else {
 			logger.trace("getContent() - end");
 			return content;
@@ -198,6 +209,8 @@ public class CsvDataset extends Dataset {
 	 * Build the content of CSV, based on the status:
 	 * CONTENT: content already there, return false
 	 * PATH: if path and csvType are provided build the content and return true otherwise false
+	 * URL: if url and csvType are provide, store the file locally and then build the content and return true, otherwise false
+	 * TEMPPATH: if tempPath and csvType are provided build the content and return true otherwise false
 	 * other: false.
 	 * The result of the last successful call can be obtained calling getContent().
 	 * @return a boolean
@@ -229,6 +242,25 @@ public class CsvDataset extends Dataset {
 				return true;
 			}
 		}
+		else if (status.contains(DatasetStatus.STATUS_URL) || status.contains(DatasetStatus.STATUS_TEMPPATH)) {
+			logger.trace("buildContent() - {}", DatasetStatus.STATUS_URL + " or " + DatasetStatus.STATUS_TEMPPATH);
+			if (url == null || csvType == null) {
+				logger.debug("buildContent() - return: false");
+				logger.trace("buildContent() - end");
+				return false;
+			}
+			else {
+				createTempFile("converter", ".csv.tmp");
+				content = new CsvDatasetContentBuilder()
+					.setPath(tempPath)
+					.setCsvType(csvType)
+					.setCharset(charset)
+					.build();
+				logger.debug("buildContent() - return: true");
+				logger.trace("buildContent() - end");
+				return true;
+			}
+		}
 		else {
 			logger.debug("buildContent() - return: false");
 			logger.trace("buildContent() - end");
@@ -239,6 +271,8 @@ public class CsvDataset extends Dataset {
 	/**
 	 * Return the stream to read the content of CSV, based on the status:
 	 * PATH: if path and csvType are provided return the stream otherwise false
+	 * URL: if url and csvType are provide store the file locally and then return the stream otherwise false
+	 * TEMPPATH: if tempPath and csvType are provided return the stream otherwise false
 	 * others: return null.
 	 * @return a stream or null
 	 * @throws IOException
@@ -259,6 +293,21 @@ public class CsvDataset extends Dataset {
 				return returnICsvListReader;
 			}
 		}
+		else if (status.contains(DatasetStatus.STATUS_URL) || status.contains(DatasetStatus.STATUS_TEMPPATH)) {
+			logger.trace("getStream() - {}", DatasetStatus.STATUS_URL + " or " + DatasetStatus.STATUS_TEMPPATH);
+			if (tempPath == null || csvType == null) {
+				logger.debug("getStream() - return: null");
+				logger.trace("getStream() - end");
+				return null;
+			}
+			else {
+				createTempFile("converter", ".csv.tmp");
+				ICsvListReader returnICsvListReader = new CsvDatasetContentBuilder().setPath(tempPath).setCsvType(csvType).setCharset(charset).stream();
+				logger.debug("getStream() - return: a stream");
+				logger.trace("getStream() - end");
+				return returnICsvListReader;
+			}
+		}
 		else if (status.contains(DatasetStatus.STATUS_CONTENT)) {
 			logger.trace("getStream() - {}", DatasetStatus.STATUS_CONTENT);
 			logger.debug("getStream() - return: null");
@@ -273,10 +322,38 @@ public class CsvDataset extends Dataset {
 	}
 
 	@Override
-	public void saveAs(Path path, boolean overwrite) throws DatasetException {
+	public void saveAs(Path path, boolean overwrite) throws DatasetException, IOException {
 		logger.trace("saveAs(Path, boolean) - start");
 		logger.debug("saveAs(Path, boolean) - {}, {}", path, overwrite);
-		logger.error("saveAs(Path, boolean) - not implemented!");
-		throw new DatasetException(MessageKey.EXCEPTION_NOT_IMPLEMENTED, "saveAs(Path, boolean)", getClass().getName());
+		
+		List<List<String>> content = getContent();
+		
+		if (content == null || getContent().size() == 0) {
+			logger.error("saveAs(Path, boolean) - no content");
+			throw new DatasetException(MessageKey.EXCEPTION_DATASET_SAVE_NO_CONTENT, path);
+		}
+
+		ICsvListWriter listWriter = null;
+        try {
+			listWriter = new CsvListWriter(new FileWriter(path.toString()), CsvPreference.STANDARD_PREFERENCE);
+
+			final CellProcessor[] processors = new CellProcessor[content.get(0).size()];
+			boolean firstRow = true;
+			for (List<String> row : content) {
+				if (firstRow) {
+					listWriter.writeHeader(row.toArray(new String[0]));
+				}
+				else {
+					listWriter.write(row, processors);
+				}
+			}
+		}
+		finally {
+			if (listWriter != null) {
+				listWriter.close();
+			}
+		}
+        
+        logger.trace("saveAs(Path, boolean) - end");
 	}
 }

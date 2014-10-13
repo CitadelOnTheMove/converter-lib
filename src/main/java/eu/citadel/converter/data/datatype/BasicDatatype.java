@@ -1,13 +1,12 @@
 package eu.citadel.converter.data.datatype;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.IOException;
 import java.net.URL;
 import java.util.List;
 
 import org.antlr.v4.runtime.tree.ParseTree;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Charsets;
 import com.google.common.collect.Lists;
@@ -92,7 +91,7 @@ public class BasicDatatype extends BasicSchema implements Datatype {
 	public static List<BasicDatatype> getAvailableBasicDatatype() {
 		Logger logger = LoggerFactory.getLogger(BasicDatatype.class.getName() + ".getAvailableBasicDatatype");
 		logger.trace("getAvailableBasicDatatype() - start");
-		List<BasicDatatype> list = Lists.newArrayList(getCitadelJson());
+		List<BasicDatatype> list = Lists.newArrayList(getCitadelJson(), getMyNeighborhoodLisbonCaseCsv());
 		logger.debug("getAvailableBasicDatatype() - return: {}", list);
 		logger.trace("getAvailableBasicDatatype() - end");
 		return list;
@@ -113,6 +112,24 @@ public class BasicDatatype extends BasicSchema implements Datatype {
 		}
 		logger.debug("getCitadelJson() - return: null");
 		logger.trace("getCitadelJson() - end");
+		return null;
+	}
+	
+	public static BasicDatatype getMyNeighborhoodLisbonCaseCsv() {
+		Logger logger = LoggerFactory.getLogger(BasicDatatype.class.getName() + ".getMyNeighborhoodLisbonCaseCsv");
+		logger.trace("getMyNeighborhoodLisbonCaseCsv() - start");
+		try {
+	        URL url = BasicDatatype.class.getResource("/data/datatype/myneighborhood_lisboncase.json");
+			BasicDatatype returnBasicDatatype = new BasicDatatype(Resources.toString(url, Charsets.UTF_8));
+			logger.debug("getMyNeighborhoodLisbonCaseCsv() - return: {}", returnBasicDatatype);
+			logger.trace("getMyNeighborhoodLisbonCaseCsv() - end");
+	        return returnBasicDatatype;
+		}
+		catch (IOException e) {
+			logger.error("getMyNeighborhoodLisbonCaseCsv() - resource not found", e);
+		}
+		logger.debug("getMyNeighborhoodLisbonCaseCsv() - return: null");
+		logger.trace("getMyNeighborhoodLisbonCaseCsv() - end");
 		return null;
 	}
 }

@@ -50,7 +50,7 @@
          "empty":"remove",
          "default":null,
          "multiplicity":"1",
-         "category":"url"
+         "category":"not-classified"
       },
       {
          "id":3,
@@ -63,7 +63,7 @@
          "empty":"remove",
          "default":null,
          "multiplicity":"1",
-         "category":"title"
+         "category":"not-classified"
       },
       {
          "id":4,
@@ -76,7 +76,7 @@
          "empty":"empty",
          "default":"",
          "multiplicity":"1",
-         "category":"url"
+         "category":"not-classified"
       },
       {
          "id":5,
@@ -162,7 +162,7 @@
          "label":"posList",
          "description":"Geographical Coordinates: Latitude and Longitude separated with a white space",
          "mandatory":true,
-         "datatype":"string",
+         "datatype":"coordinates",
          "format":null,
          "empty":null,
          "default":"",

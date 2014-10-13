@@ -1,8 +1,5 @@
 package eu.citadel.converter.data.dataset;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.IOException;
 import java.net.URL;
 import java.nio.charset.Charset;
@@ -13,6 +10,8 @@ import java.util.Map;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.ss.usermodel.WorkbookFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -154,10 +153,10 @@ public class ExcelDataset extends Dataset {
 			logger.trace("getFirstRow() - end", returnList);
 			return returnList;
 		}
-		else if (status.contains(DatasetStatus.STATUS_PATH)) {
-			logger.trace("getFirstRow() - {}", DatasetStatus.STATUS_PATH);
+		else if (status.contains(DatasetStatus.STATUS_PATH) || status.contains(DatasetStatus.STATUS_TEMPPATH)) {
+			logger.trace("getFirstRow() - {}", DatasetStatus.STATUS_PATH + " or " + DatasetStatus.STATUS_TEMPPATH);
 			List<List<Object>> content = new ExcelDatasetContentBuilder()
-				.setPath(path)
+				.setPath(status.contains(DatasetStatus.STATUS_PATH) ? path : tempPath)
 				.setExcelType(excelType)
 				.setLines(1)
 				.build();
@@ -178,6 +177,7 @@ public class ExcelDataset extends Dataset {
 	 * Return the content of Excel, based on the status in order of importance:
 	 * CONTENT: the content already present.
 	 * PATH: as obtained after the last call to build()
+	 * TEMPPATH: as obtained after the last call to build()
 	 * @return the content of CSV
 	 * @throws IOException
 	 */
@@ -193,6 +193,11 @@ public class ExcelDataset extends Dataset {
 			logger.trace("getContent() - end");
 			return content;
 		}
+		else if (status.contains(DatasetStatus.STATUS_TEMPPATH)) {
+			logger.trace("getContent() - {}", DatasetStatus.STATUS_TEMPPATH);
+			logger.trace("getContent() - end");
+			return content;
+		}
 
 		logger.trace("getContent() - end");
 		return content;
@@ -202,6 +207,8 @@ public class ExcelDataset extends Dataset {
 	 * Build the content of Excel, based on the status:
 	 * CONTENT: content already there, return false
 	 * PATH: if path and excelType are provided build the content and return true otherwise false
+	 * URL: if url and excelType are provide, store the file locally and then build the content and return true, otherwise false
+	 * TEMPPATH: if tempPath and excelType are provided build the content and return true otherwise false
 	 * other: false.
 	 * The result of the last successful call can be obtained calling getContent().
 	 * @return a boolean
@@ -231,6 +238,24 @@ public class ExcelDataset extends Dataset {
 				return true;
 			}
 		}
+		else if (status.contains(DatasetStatus.STATUS_URL) || status.contains(DatasetStatus.STATUS_TEMPPATH)) {
+			logger.trace("buildContent() - {}", DatasetStatus.STATUS_URL + " or " + DatasetStatus.STATUS_TEMPPATH);
+			if (url == null || excelType == null) {
+				logger.debug("buildContent() - return: false");
+				logger.trace("buildContent() - end");
+				return false;
+			}
+			else {
+				createTempFile("converter", ".excel.tmp");
+				content = new ExcelDatasetContentBuilder()
+					.setPath(tempPath)
+					.setExcelType(excelType)
+					.build();
+				logger.debug("buildContent() - return: true");
+				logger.trace("buildContent() - end");
+				return true;
+			}
+		}
 		else {
 			logger.trace("buildContent() - end - false");
 			return false;
@@ -239,19 +264,19 @@ public class ExcelDataset extends Dataset {
 	
 	/**
 	 * Return index and names of the sheets of the Excel file.
-	 * If the path is not provided, return null.
+	 * If the path or tempPath is not provided, return null.
 	 * @return a new map of index and names of the sheets
 	 * @throws InvalidFormatException
 	 * @throws IOException
 	 */
 	public Map<Integer, String> getSheetMap() throws ExcelDatasetException, IOException {
 		logger.trace("getSheetMap() - start");
-		if (status.contains(DatasetStatus.STATUS_PATH)) {
-			logger.trace("getSheetMap() - {}", DatasetStatus.STATUS_PATH);
+		if (status.contains(DatasetStatus.STATUS_PATH) || status.contains(DatasetStatus.STATUS_TEMPPATH)) {
+			logger.trace("getSheetMap() - {}", DatasetStatus.STATUS_PATH + " or " + DatasetStatus.STATUS_TEMPPATH);
 			Map<Integer, String> sheetMap = Maps.newHashMap();
 			Workbook wb = null;
 			try {
-				wb = WorkbookFactory.create(path.toFile());
+				wb = WorkbookFactory.create(status.contains(DatasetStatus.STATUS_PATH) ? path.toFile() : tempPath.toFile());
 			}
 			catch (InvalidFormatException e) {
 				throw new ExcelDatasetException(MessageKey.EXCEPTION_EXCEL_INVALID_FORMAT, e.getMessage());

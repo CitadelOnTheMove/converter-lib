@@ -51,6 +51,11 @@ public class MessageKey {
 	 */
 	public static final String EXCEPTION_TRANSFORM = "exception-transform";
 	
+	/**
+	 * Default key for {@link eu.citadel.converter.exceptions.CKANException}.
+	 */
+	public static final String EXCEPTION_CKAN = "exception-ckan";
+	
 	
 	// CUSTOM EXCEPTION KEYS
 	/**
@@ -132,4 +137,9 @@ public class MessageKey {
 	 * Custom key for {@link eu.citadel.converter.exceptions.TransformException}.
 	 */
 	public static final String EXCEPTION_CANNOT_GET_CONTENT = "exception-cannot-get-content";
+	
+	/**
+	 * Custom key for {@link eu.citadel.converter.exceptions.DatasetException}.
+	 */
+	public static final String EXCEPTION_DATASET_INTERNAL_STATE_NOT_AVAILABLE = "exception-dataset-internal-state-not-available";
 }

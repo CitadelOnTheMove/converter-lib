@@ -1,16 +1,17 @@
 package eu.citadel.converter.data.dataset;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URL;
 import java.nio.file.Path;
 
-import com.google.common.io.Files;
+import org.apache.poi.util.IOUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import eu.citadel.converter.exceptions.DatasetException;
+import eu.citadel.converter.localization.MessageKey;
 
 /**
  * Dataset with basic features.
@@ -82,20 +83,21 @@ public abstract class Dataset {
 	}
 	
 	/**
-	 * Save the
-	 * @param path
-	 * @param overwrite
+	 * Save the file in the specified path.
+	 * @param path the path to save to
+	 * @param overwrite if the file can be overwritten or not
 	 */
-	public abstract void saveAs(Path path, boolean overwrite) throws DatasetException, IOException ;
+	public abstract void saveAs(Path path, boolean overwrite) throws DatasetException, IOException;
 	
 	/**
-	 * 
-	 * @param file
+	 * Save the provided content in the specified file.
+	 * @param file the file to save into
+	 * @param content the content of the file
 	 * @throws IOException
 	 */
 	protected void save(File file, String content) throws IOException {
 		logger.trace("save(File, String) - start");
-		Files.write(content.getBytes(), file);
+		com.google.common.io.Files.write(content.getBytes(), file);
 		logger.debug("save(File, String) - saved content to {}", file);
 		logger.trace("save(File, String) - end");
 	}
@@ -112,11 +114,83 @@ public abstract class Dataset {
 	}
 	
 	/**
+	 * Return the internal state object for the current url, path, tempPath or contentChanged if available.
+	 * @param datasetStatus the status from {@link eu.citadel.converter.data.dataset.DatasetStatus}
+	 * @return the object
+	 * @throws DatasetException if the state is not available or if asking for the content
+	 */
+	public final Object getInternalStateObject(String datasetStatus) throws DatasetException {
+		logger.trace("getInternalStateObject() - start");
+		Object returnValue = null;
+		switch (datasetStatus == null ? "" : datasetStatus) {
+			case DatasetStatus.STATUS_PATH:
+				if (status.contains(datasetStatus)) {
+					returnValue =  path;
+				}
+				break;
+				
+			case DatasetStatus.STATUS_URL:
+				if (status.contains(datasetStatus)) {
+					returnValue =  url;
+				}
+				break;
+				
+			case DatasetStatus.STATUS_TEMPPATH:
+				if (status.contains(datasetStatus)) {
+					returnValue =  tempPath;
+				}
+				break;
+				
+			case DatasetStatus.STATUS_CONTENTCHANGED:
+				returnValue = status.contains(datasetStatus);
+				break;
+				
+			case DatasetStatus.STATUS_CONTENT:
+				break;
+				
+			default:
+				break;
+		}
+		
+		if (returnValue == null) {
+			logger.trace("getInternalStateObject() - not available");
+			throw new DatasetException(MessageKey.EXCEPTION_DATASET_INTERNAL_STATE_NOT_AVAILABLE, datasetStatus);
+		}
+		
+		logger.trace("getInternalStateObject() - end");
+		return returnValue;
+	}
+	
+	/**
 	 * Update the changed status of the Dataset
 	 */
 	protected void changeContent() {
 		logger.trace("changeContent() - start");
 		status.add(DatasetStatus.STATUS_CONTENTCHANGED);
 		logger.trace("changeContent() - end");
+	}
+	
+	/**
+	 * Create a temporary file with the specified prefix and postfix, the name will be completed with random chars in the middle.
+	 * @param prefix the name of the file
+	 * @param postfix the extension of the file
+	 * @throws IOException
+	 */
+	protected void createTempFile(String prefix, String postfix) throws IOException {
+		logger.trace("createTempFile(String, String) - start");
+		if (status.contains(DatasetStatus.STATUS_TEMPPATH) && !tempPath.toFile().exists()) {
+			logger.warn("createTempFile(String, String) - file not found {}", tempPath);
+			tempPath = null;
+			status.remove(DatasetStatus.STATUS_TEMPPATH);
+		}
+		if (!status.contains(DatasetStatus.STATUS_TEMPPATH)) {
+			InputStream is = url.openStream();
+			byte[] bytes = IOUtils.toByteArray(is);
+			tempPath = java.nio.file.Files.createTempFile(prefix, postfix);
+			java.nio.file.Files.write(tempPath, bytes);
+			logger.trace("createTempFile(String, String) - created {}", tempPath);
+			status.add(DatasetStatus.STATUS_TEMPPATH);
+		}
+		logger.trace("createTempFile(String, String) - end");
 	}
 }

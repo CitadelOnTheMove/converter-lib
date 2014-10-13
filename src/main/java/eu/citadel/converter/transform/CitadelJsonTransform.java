@@ -5,6 +5,7 @@ import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -18,6 +19,7 @@ import org.supercsv.io.ICsvListReader;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.github.fge.jackson.JsonLoader;
 import com.github.fge.jsonschema.core.exceptions.ProcessingException;
+import com.github.fge.jsonschema.core.report.ProcessingMessage;
 import com.github.fge.jsonschema.core.report.ProcessingReport;
 import com.github.fge.jsonschema.main.JsonSchema;
 import com.github.fge.jsonschema.main.JsonSchemaFactory;
@@ -37,7 +39,6 @@ import eu.citadel.converter.data.datatype.BasicDatatypeUtils;
 import eu.citadel.converter.data.datatype.Datatype;
 import eu.citadel.converter.data.metadata.BasicMetadata;
 import eu.citadel.converter.data.metadata.BasicMetadataUtils;
-import eu.citadel.converter.exceptions.ConverterException;
 import eu.citadel.converter.exceptions.ExcelDatasetException;
 import eu.citadel.converter.exceptions.TransformException;
 import eu.citadel.converter.localization.MessageKey;
@@ -60,32 +61,18 @@ import eu.citadel.converter.transform.config.TransformationConfig;
  * a Citadel compatible JSON in a {@link eu.citadel.converter.data.dataset.JsonDataset}.
  * @author Leonardo Dal Zovo
  */
-public class CitadelJsonTransform implements Transform {
+public class CitadelJsonTransform extends BasicTransform {
 	/**
 	 * Logger for this class
 	 */
 	private final Logger logger = LoggerFactory.getLogger(CitadelJsonTransform.class);
 	
-	/**
-	 * The source Data
-	 */
-	protected Data<?, ?> data = null;
-	
-	/**
-	 * The Datatype
-	 */
-	protected Datatype datatype = null;
-	
-	/**
-	 * The TransformationConfig
-	 */
-	protected TransformationConfig transformationConfig = null;
 
 	/**
 	 * Default Constructor
 	 */
 	public CitadelJsonTransform() {
-		this(null, null, null);
+		super(null, null, null);
 		logger.trace("CitadelJsonTransform() - start");
 		logger.trace("CitadelJsonTransform() - end");
 	}
@@ -97,145 +84,11 @@ public class CitadelJsonTransform implements Transform {
 	 * @param transformationConfig the TransformationConfig
 	 */
 	public CitadelJsonTransform(Data<?, ?> data, Datatype datatype, TransformationConfig transformationConfig) {
-		super();
+		super(data, datatype, transformationConfig);
 		logger.trace("CitadelJsonTransform(Data<?,?>, Datatype, TransformationConfig) - start");
-		setSource(data);
-		setDatatype(datatype);
-		setTransformationConfig(transformationConfig);
 		logger.trace("CitadelJsonTransform(Data<?,?>, Datatype, TransformationConfig) - end");
 	}
-
-	@Override
-	public Data<?, ?> getSource() {
-		logger.trace("getSource() - start");
-		logger.trace("getSource() - end");
-		return data;
-	}
-
-	@Override
-	public boolean setSource(Data<?, ?> source) {
-		logger.trace("setSource(Data<?,?>) - start");
-		data = source;
-		logger.trace("setSource(Data<?,?>) - end");
-		return true;
-	}
-
-	@Override
-	public Datatype getDatatype() {
-		logger.trace("getDatatype() - start");
-		logger.trace("getDatatype() - end");
-		return datatype;
-	}
-
-	@Override
-	public boolean setDatatype(Datatype datatype) {
-		logger.trace("setDatatype(Datatype) - start");
-		this.datatype = datatype;
-		logger.trace("setDatatype(Datatype) - end");
-		return true;
-	}
-
-	@Override
-	public TransformationConfig getTransformationConfig() {
-		logger.trace("getTransformationConfig() - start");
-		logger.trace("getTransformationConfig() - end");
-		return transformationConfig;
-	}
-
-	@Override
-	public boolean setTransformationConfig(TransformationConfig transformationConfig) {
-		logger.trace("setTransformationConfig(TransformationConfig) - start");
-		this.transformationConfig = transformationConfig;
-		logger.trace("setTransformationConfig(TransformationConfig) - end");
-		return true;
-	}
 	
-	@Override
-	public Data<?, ?> getTarget() throws ConverterException, IOException {
-		logger.trace("getTarget() - start");
-		if (data == null) {
-			logger.error("getTarget() - no Data");
-			throw new TransformException(MessageKey.EXCEPTION_NOT_PROVIDED, "Data");
-		}
-		else {
-			// Datatype
-			BasicDatatype basicDatatype = null;
-			if (datatype == null) {
-				logger.error("getTarget() - no Datatype");
-				throw new TransformException(MessageKey.EXCEPTION_NOT_PROVIDED, "Datatype");
-			}
-			else if (datatype instanceof BasicDatatype) {
-				basicDatatype = (BasicDatatype) datatype;
-			}
-			else {
-				logger.error("getTarget() - unsupported Datatype - {}", datatype.getClass().getName());
-				throw new TransformException(MessageKey.EXCEPTION_NOT_IMPLEMENTED,
-					"CitadelJsonTransform.getTarget()", datatype.getClass().getName());
-			}
-			
-			// Transformation
-			BasicTransformationConfig basicTransformationConfig = null;
-			if (transformationConfig == null) {
-				logger.error("getTarget() - no TransformationConfig");
-				throw new TransformException(MessageKey.EXCEPTION_NOT_PROVIDED, "TransformationConfig");
-			}
-			else if (transformationConfig instanceof BasicTransformationConfig) {
-				basicTransformationConfig = (BasicTransformationConfig) transformationConfig;
-			}
-			else {
-				logger.error("getTarget() - unsupported TransformationConfig - {}", transformationConfig.getClass().getName());
-				throw new TransformException(MessageKey.EXCEPTION_NOT_IMPLEMENTED,
-					"CitadelJsonTransform.getTarget()", transformationConfig.getClass().getName());
-			}
-			
-			// Metadata
-			Object metadata = data.getMetadata();
-			BasicMetadata basicMetadata = null;
-			if (metadata == null) {
-				logger.error("getTarget() - no Metadata");
-				throw new TransformException(MessageKey.EXCEPTION_NOT_PROVIDED, "Metadata");
-			}
-			if (metadata instanceof BasicMetadata) {
-				basicMetadata = (BasicMetadata) metadata;
-			}
-			else {
-				logger.error("getTarget() - unsupported Metadata - {}", metadata.getClass().getName());
-				throw new TransformException(MessageKey.EXCEPTION_NOT_IMPLEMENTED,
-					"CitadelJsonTransform.getTarget()", metadata.getClass().getName());
-			}
-			
-			// Dataset
-			Object dataset = data.getDataset();
-			if (dataset == null) {
-				logger.error("getTarget() - no Dataset");
-				throw new TransformException(MessageKey.EXCEPTION_NOT_PROVIDED, "Dataset");
-			}
-			
-			if (dataset instanceof CsvDataset) {
-				if (((CsvDataset) dataset).getCsvType() == null) {
-					logger.error("getTarget() - no CsvType");
-					throw new TransformException(MessageKey.EXCEPTION_NOT_PROVIDED, "CsvType");
-				}
-				Data<?, ?> returnData = getTarget((CsvDataset) dataset, basicMetadata, basicDatatype, basicTransformationConfig);
-				logger.trace("getTarget() - end");
-				return returnData;
-			}
-			else if (dataset instanceof ExcelDataset) {
-				if (((ExcelDataset) dataset).getExcelType() == null) {
-					logger.error("getTarget() - no ExcelType");
-					throw new TransformException(MessageKey.EXCEPTION_NOT_PROVIDED, "ExcelType");
-				}
-				Data<?, ?> returnData = getTarget((ExcelDataset) dataset, basicMetadata, basicDatatype, basicTransformationConfig);
-				logger.trace("getTarget() - end");
-				return returnData;
-			}
-			else {
-				logger.error("getTarget() - unsupported Dataset - {}", dataset.getClass().getName());
-				throw new TransformException(MessageKey.EXCEPTION_NOT_IMPLEMENTED,
-					"CitadelJsonTransform.getTarget()", dataset.getClass().getName());
-			}
-		}
-	}
 	
 	/**
 	 * Build a map matching Metadata id to TransformationConfig id to know
@@ -527,6 +380,9 @@ public class CitadelJsonTransform implements Transform {
 				val = String.format(key, "[" + Joiner.on(",").join(splittedVal) + "]");
 			}
 			else {
+				if ("coordinates".equalsIgnoreCase(datatypeString)) {
+					curValEncoded = curValEncoded.replace(',', ' ').replace(';', ' ').replace("  ", " ").trim();
+				}
 				val = String.format(key, getValueWithDatatype(curValEncoded, datatypeString));
 			}
 		}
@@ -576,7 +432,11 @@ public class CitadelJsonTransform implements Transform {
 			else {
 				// if a single element was expected, concat the values to get a single string
 				logger.debug("inspectValue(BasicSchemaObjAbstractValue<?>, List<Object>, String, BasicSchemaObjAbstractValue<?>, BasicSchemaObjAbstractValue<?>) - string concatenation");
-				val = String.format(key, getValueWithDatatype(Joiner.on("").join(vListNoDQuote), datatypeString));
+				if ("coordinates".equalsIgnoreCase(datatypeString)) {
+					val = String.format(key, getValueWithDatatype(Joiner.on(" ").join(vListNoDQuote).replace("  ", " "), datatypeString));
+				} else {
+					val = String.format(key, getValueWithDatatype(Joiner.on("").join(vListNoDQuote), datatypeString));
+				}
 			}
 		}
 		else if (value instanceof BasicSchemaObjValueObject) {
@@ -642,6 +502,7 @@ public class CitadelJsonTransform implements Transform {
 		String ret = new String();
 		switch (datatype) {
 			case "string":
+			case "coordinates":
 				ret = "\"" + value.toString() + "\"";
 				break;
 			
@@ -665,7 +526,7 @@ public class CitadelJsonTransform implements Transform {
 	 * @throws IOException
 	 * @throws TransformException
 	 */
-	protected static Data<?, ?> getTarget(CsvDataset dataset, BasicMetadata metadata,
+	protected Data<?, ?> getTarget(CsvDataset dataset, BasicMetadata metadata,
 		BasicDatatype datatype, BasicTransformationConfig transformationConfig) throws IOException, TransformException {
 		Logger logger = LoggerFactory.getLogger(CitadelJsonTransform.class.getName() + ".getTarget.CsvDataset");
 		logger.trace("getTarget(CsvDataset, BasicMetadata, BasicDatatype, BasicTransformationConfig) - start");
@@ -732,7 +593,7 @@ public class CitadelJsonTransform implements Transform {
 	 * @throws IOException
 	 * @throws InvalidFormatException 
 	 */
-	protected static Data<?, ?> getTarget(ExcelDataset dataset, BasicMetadata metadata,
+	protected Data<?, ?> getTarget(ExcelDataset dataset, BasicMetadata metadata,
 		BasicDatatype datatype, BasicTransformationConfig transformationConfig) throws TransformException, IOException {
 		Logger logger = LoggerFactory.getLogger(CitadelJsonTransform.class.getName() + ".getTarget.ExcelDataset");
 		logger.trace("getTarget(ExcelDataset, BasicMetadata, BasicDatatype, BasicTransformationConfig) - start");
@@ -894,8 +755,23 @@ public class CitadelJsonTransform implements Transform {
 
 	        ProcessingReport report = schema.validate(generatedJson);
 	        if (!report.isSuccess()) {
-	        	logger.error("validateJson(String) - not valid: {}", report.toString());
-	        	throw new TransformException(report.toString());
+	        	String message = report.toString();
+	        	for (Iterator<ProcessingMessage> i = report.iterator(); i.hasNext();) {
+	        		ProcessingMessage processingMessage = i.next();
+	        		JsonNode jsonMessage = processingMessage.asJson();
+	        		message = processingMessage.getMessage();
+	        		if (jsonMessage.get("instance") != null) {
+	        			if (jsonMessage.get("instance").get("pointer") != null) {
+	        				message = message + " in " + jsonMessage.get("instance").get("pointer").toString();
+	        			}
+	        			else {
+	        				message = message + " in " + jsonMessage.get("instance").toString();
+	        			}
+	        		}
+	        		
+	        	}
+	        	logger.error("validateJson(String) - not valid: {}", message);
+	        	throw new TransformException(message);
 	        }
 	        logger.debug("validateJson(String) - end");
 		}

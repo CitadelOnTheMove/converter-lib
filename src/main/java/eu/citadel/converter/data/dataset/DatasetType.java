@@ -1,6 +1,7 @@
 package eu.citadel.converter.data.dataset;
 
 import java.io.IOException;
+import java.net.URL;
 import java.nio.file.Path;
 import java.util.Set;
 
@@ -74,6 +75,22 @@ public class DatasetType extends AbstractSingleType {
 	}
 	
 	/**
+	 * Return the type of the specified url or null if not detected or not a file.
+	 * @param url the url of the file to detect
+	 * @return type or null
+	 */
+	public static String detect(URL url) {
+		Logger logger = LoggerFactory.getLogger(DatasetType.class.getName() + ".detect");
+		logger.trace("detect(URL) - start");
+		
+		String mimeType = getMimeType(url);
+		String datatypeString = getDatasetTypeFromTikaMediaType(mimeType);
+		
+		logger.trace("detect(URL) - end");
+        return datatypeString;
+	}
+	
+	/**
 	 * Return the type of the specified file or null if not detected or not a file.
 	 * @param path the path of the file to detect
 	 * @return type or null
@@ -81,34 +98,81 @@ public class DatasetType extends AbstractSingleType {
 	public static String detect(Path path) {
 		Logger logger = LoggerFactory.getLogger(DatasetType.class.getName() + ".detect");
 		logger.trace("detect(Path) - start");
+		
+		String mimeType = getMimeType(path);
+		String datatypeString = getDatasetTypeFromTikaMediaType(mimeType);
+		
+		logger.trace("detect(Path) - end");
+        return datatypeString;
+	}
+	
+	/**
+	 * Return the Mime Type of the specified URL
+	 * @param url the url of the file to detect
+	 * @return the Mime Type or null
+	 */
+	public static String getMimeType(URL url) {
+		Logger logger = LoggerFactory.getLogger(DatasetType.class.getName() + ".getMimeType");
+		logger.trace("getMimeType(URL) - start");
+		String type = null;
+        try {
+            type = new Tika().detect(url);
+            logger.trace("getMimeType(URL) - end");
+		}
+        catch (IOException e) {
+			logger.warn("getMimeType(URL) - not detected", e);
+        }
+        return type;
+	}
+	
+	/**
+	 * Return the Mime Type of the specified Path
+	 * @param path the path of the file to detect
+	 * @return the Mime Type or null
+	 */
+	public static String getMimeType(Path path) {
+		Logger logger = LoggerFactory.getLogger(DatasetType.class.getName() + ".getMimeType");
+		logger.trace("getMimeType(Path) - start");
 		String type = null;
         try {
             type = new Tika().detect(path.toFile());
+            logger.trace("getMimeType(Path) - end");
 		}
         catch (IOException e) {
-			logger.warn("detect(Path) - not detected", e);
+			logger.warn("getMimeType(Path) - not detected", e);
         }
-        switch (type) {
-        	case "text/csv":
-        		logger.trace("detect(Path) - end");
-        		logger.debug("detect(Path) - return: {}", TYPE_CSV);
-        		return TYPE_CSV;
-        	
-        	case "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet":
-        	case "application/vnd.ms-excel":
-        		logger.trace("detect(Path) - end");
-        		logger.debug("detect(Path) - return: {}", TYPE_EXCEL);
-        		return TYPE_EXCEL;
-        		
-        	case "application/json":
-        		logger.trace("detect(Path) - end");
-        		logger.debug("detect(Path) - return: {}", TYPE_JSON);
-        		return TYPE_JSON;
-        		
-    		default:
-    			logger.warn("detect(Path) - unsupported type");
-    			logger.trace("detect(Path) - end");
-    			return null;
-        }
+        return type;
+	}
+	
+	/**
+	 * Return one of the DatasetType from Tika Media Type or null.
+	 * @param tikaDetect Tika Media Type as returned from new Tika().detect
+	 * @return the DatasetType String constant
+	 */
+	private static String getDatasetTypeFromTikaMediaType(String tikaDetect) {
+		Logger logger = LoggerFactory.getLogger(DatasetType.class.getName() + ".getDatasetTypeFromTikaMediaType");
+		logger.trace("getDatasetTypeFromTikaMediaType(String) - start");
+		String tikaDetectFix = tikaDetect == null ? "" : tikaDetect;
+		if (tikaDetectFix.contains("text/csv")) {
+    		logger.trace("getDatasetTypeFromTikaMediaType(String) - end");
+    		logger.debug("getDatasetTypeFromTikaMediaType(String) - return: {}", TYPE_CSV);
+    		return TYPE_CSV;
+		}
+		else if (tikaDetectFix.contains("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet") ||
+			tikaDetectFix.contains("application/vnd.ms-excel")) {
+    		logger.trace("getDatasetTypeFromTikaMediaType(String) - end");
+    		logger.debug("getDatasetTypeFromTikaMediaType(String) - return: {}", TYPE_EXCEL);
+    		return TYPE_EXCEL;
+		}
+		else if (tikaDetectFix.contains("application/json")) {
+    		logger.trace("getDatasetTypeFromTikaMediaType(String) - end");
+    		logger.debug("getDatasetTypeFromTikaMediaType(String) - return: {}", TYPE_JSON);
+    		return TYPE_JSON;
+		}
+		else {
+			logger.warn("getDatasetTypeFromTikaMediaType(String) - unsupported type");
+			logger.trace("getDatasetTypeFromTikaMediaType(String) - end");
+			return null;
+	    }
 	}
 }
