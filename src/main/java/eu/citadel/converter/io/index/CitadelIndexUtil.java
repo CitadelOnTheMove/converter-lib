@@ -104,7 +104,7 @@ public class CitadelIndexUtil {
 				log.error("Invalid response from server: " + rs.getResponse() + ", " + rs.getMessage() + ".");
 				throw new ConverterException("Invalid response from server: " + rs.getResponse() + ", " + rs.getMessage() + ".");
 			}
-        	jsonResponse = saveToIndex(config, rs.getResponse());
+        	jsonResponse = saveToIndex(config, rs.getStoredfileName());
 
         	IndexSaveToIndexResponse ri = gson.fromJson(jsonResponse, IndexSaveToIndexResponse.class);
 
