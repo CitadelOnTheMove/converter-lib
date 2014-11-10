@@ -8,7 +8,7 @@
       },
       {
          "id":0,
-         "name":"Language",
+         "name":"metadata-citadel-json-generic-lang",
          "label":"lang",
          "description":"Language of the dataset",
          "mandatory":true,
@@ -28,7 +28,7 @@
       },
       {
          "id":1,
-         "name":"Author value",
+         "name":"metadata-citadel-json-generic-author",
          "label":"value",
          "description":"Author value",
          "mandatory":true,
@@ -41,20 +41,7 @@
       },
       {
          "id":2,
-         "name":"License href",
-         "label":"href",
-         "description":"Url of the License",
-         "mandatory":false,
-         "datatype":"string",
-         "format":null,
-         "empty":"remove",
-         "default":null,
-         "multiplicity":"1",
-         "category":"not-classified"
-      },
-      {
-         "id":3,
-         "name":"License name",
+         "name":"metadata-citadel-json-generic-license-name",
          "label":"term",
          "description":"Name of the License",
          "mandatory":false,
@@ -66,8 +53,21 @@
          "category":"not-classified"
       },
       {
+         "id":3,
+         "name":"metadata-citadel-json-generic-licence-href",
+         "label":"href",
+         "description":"Url of the License",
+         "mandatory":false,
+         "datatype":"string",
+         "format":null,
+         "empty":"remove",
+         "default":null,
+         "multiplicity":"1",
+         "category":"not-classified"
+      },
+      {
          "id":4,
-         "name":"Source url",
+         "name":"metadata-citadel-json-generic-source-url",
          "label":"href",
          "description":"Url of the source of the dataset",
          "mandatory":false,
@@ -80,7 +80,7 @@
       },
       {
          "id":5,
-         "name":"Update frequency",
+         "name":"metadata-citadel-json-generic-update-frequency",
          "label":"updatefrequency",
          "description":"Frequency of the update of the dataset",
          "mandatory":false,
@@ -93,7 +93,7 @@
       },
       {
          "id":6,
-         "name":"POI ID",
+         "name":"metadata-citadel-json-generic-poi-id",
          "label":"id",
          "description":"POI ID",
          "mandatory":false,
@@ -106,7 +106,7 @@
       },
       {
          "id":7,
-         "name":"POI name",
+         "name":"metadata-citadel-json-generic-poi-name",
          "label":"title",
          "description":"POI name",
          "mandatory":true,
@@ -119,7 +119,7 @@
       },
       {
          "id":8,
-         "name":"POI description",
+         "name":"metadata-citadel-json-generic-poi-description",
          "label":"description",
          "description":"POI description",
          "mandatory":false,
@@ -132,7 +132,7 @@
       },
       {
          "id":9,
-         "name":"POI category",
+         "name":"metadata-citadel-json-generic-poi-category",
          "label":"category",
          "description":"POI list of categories",
          "mandatory":true,
@@ -145,7 +145,7 @@
       },
       {
          "id":10,
-         "name":"Coordinates System",
+         "name":"metadata-citadel-json-generic-coordinates-system",
          "label":"srsName",
          "description":"Geographical Coordinates System",
          "mandatory":true,
@@ -158,7 +158,7 @@
       },
       {
          "id":11,
-         "name":"Geographical Coordinates",
+         "name":"metadata-citadel-json-generic-geographical-coordinates",
          "label":"posList",
          "description":"Geographical Coordinates: Latitude and Longitude separated with a white space",
          "mandatory":true,
@@ -171,7 +171,7 @@
       },
       {
          "id":12,
-         "name":"POI address",
+         "name":"metadata-citadel-json-generic-poi-address",
          "label":"value",
          "description":"POI address",
          "mandatory":true,
@@ -184,7 +184,7 @@
       },
       {
          "id":13,
-         "name":"POI postal code",
+         "name":"metadata-citadel-json-generic-poi-postal-code",
          "label":"postal",
          "description":"POI postal code",
          "mandatory":false,
@@ -197,7 +197,7 @@
       },
       {
          "id":14,
-         "name":"POI city",
+         "name":"metadata-citadel-json-generic-poi-city",
          "label":"city",
          "description":"POI city",
          "mandatory":false,
@@ -210,7 +210,7 @@
       },
       {
          "id":15,
-         "name":"POI website",
+         "name":"metadata-citadel-json-generic-poi-website",
          "label":null,
          "description":"POI website",
          "mandatory":false,
@@ -223,7 +223,7 @@
       },
       {
          "id":16,
-         "name":"POI email",
+         "name":"metadata-citadel-json-generic-poi-email",
          "label":null,
          "description":"POI email",
          "mandatory":false,
@@ -236,7 +236,7 @@
       },
       {
          "id":17,
-         "name":"POI phone",
+         "name":"metadata-citadel-json-generic-poi-phone",
          "label":null,
          "description":"POI phone",
          "mandatory":false,
@@ -249,7 +249,7 @@
       },
       {
          "id":18,
-         "name":"Image",
+         "name":"metadata-citadel-json-generic-image",
          "label":null,
          "description":"Image",
          "mandatory":false,
@@ -262,7 +262,7 @@
       },
       {
          "id":19,
-         "name":"Video",
+         "name":"metadata-citadel-json-generic-video",
          "label":null,
          "description":"Video",
          "mandatory":false,
@@ -275,7 +275,7 @@
       },
       {
          "id":20,
-         "name":"Park type",
+         "name":"metadata-citadel-json-generic-park-type",
          "label":null,
          "description":"Park type",
          "mandatory":false,
@@ -288,7 +288,7 @@
       },
       {
          "id":21,
-         "name":"Park floors",
+         "name":"metadata-citadel-json-generic-park-floors",
          "label":null,
          "description":"Park floors",
          "mandatory":false,
@@ -301,7 +301,7 @@
       },
       {
          "id":22,
-         "name":"Park capacity",
+         "name":"metadata-citadel-json-generic-park-capacity",
          "label":null,
          "description":"Park capacity",
          "mandatory":false,
