@@ -104,6 +104,7 @@ public class CKANUtils {
 	/**
 	 * upsert value
 	 */
+	@SuppressWarnings("unused")
 	private static final String FIELD_UPSERT_RESOURCE_METHOD_UPSERT = "upsert";
 	
 	/**
@@ -114,6 +115,7 @@ public class CKANUtils {
 	/**
 	 * update value
 	 */
+	@SuppressWarnings("unused")
 	private static final String FIELD_UPSERT_RESOURCE_METHOD_UPDATE = "update";
 	
 	/**
@@ -124,6 +126,7 @@ public class CKANUtils {
 	/**
 	 * datastore_create action
 	 */
+	@SuppressWarnings("unused")
 	private static final String ACTION_DATASTORE_CREATE = "/action/datastore_create";
 	
 	/**
@@ -246,6 +249,9 @@ public class CKANUtils {
 				else if (objValue instanceof Boolean || objValue instanceof Number) {
 					values.add("\"" + key + "\":" + objValue);
 				}
+				else if (objValue instanceof List<?>) {
+					values.add("\"" + key + "\":" + encodeList(objValue));
+				}
 				else {
 					values.add("\"" + key + "\":\"" + objValue + "\"");
 				}
@@ -256,6 +262,27 @@ public class CKANUtils {
 		
 		response = getHttpResponse(host, apiVersion, apiKey, ACTION_DATASTORE_UPSERT, data);
 		return isSuccessfulAndClose(response);
+	}
+	
+	private static String encodeList(Object obj){
+		if(obj == null) return "";
+		if(!(obj instanceof List<?>)) return String.valueOf(obj);
+		List<?> list = (List<?>) obj;
+		if(list == null || list.isEmpty()) return "";
+
+		StringBuilder ret = new StringBuilder();
+		ret.append("[");
+
+		for (Object o : list) {
+			ret.append("\"");
+			ret.append(encodeList(o));
+			ret.append("\"");
+			if(list.indexOf(o) < list.size()) {
+				ret.append(", ");
+			}
+		}
+		ret.append("]");
+		return ret.toString();
 	}
 	
 	/**
@@ -314,6 +341,7 @@ public class CKANUtils {
 	 * @return
 	 * @throws IOException
 	 */
+	@SuppressWarnings("unused")
 	public static boolean datastoreResourceCreate(URL host, String apiVersion, String apiKey, Map<String, Object> resourceMap) throws IOException {
 		if (resourceMap == null) {
 			resourceMap = Maps.newHashMap();
